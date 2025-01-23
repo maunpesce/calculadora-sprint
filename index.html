@@ -171,7 +171,7 @@
                     ${hu.points.map((point, index) => `
                         <td>
                             <input type="number" value="${point}" 
-                                onchange="updatePoints(${huIndex}, ${index}, this)"
+                                onfocus="this.select()" 
                                 oninput="validateAndUpdate(${huIndex}, ${index}, this)"
                                 style="width: 60px;">
                         </td>`).join("")}
@@ -190,12 +190,6 @@
                 inputElement.value = 40;
                 value = 40;
             }
-            huList[huIndex].points[devIndex] = value;
-            renderHUList();
-        }
-
-        function updatePoints(huIndex, devIndex, inputElement) {
-            const value = parseInt(inputElement.value) || 0;
             huList[huIndex].points[devIndex] = value;
             calculateResults();
         }
