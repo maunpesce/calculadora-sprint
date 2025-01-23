@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Sprint</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e2f;
+            color: #f0f0f5;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #28293e;
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: #2b2c44;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .section {
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            margin-bottom: 1rem;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 2rem);
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: none;
+            border-radius: 4px;
+            background-color: #1e1e2f;
+            color: #f0f0f5;
+        }
+        button {
+            background-color: #4f46e5;
+            color: #f0f0f5;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            background-color: #3b37c9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        table, th, td {
+            border: 1px solid #3b3c5a;
+        }
+        th, td {
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .info-box {
+            background-color: #3b3c5a;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Calculadora de Sprint
+    </header>
+
+    <div class="container">
+        <!-- Configuración del Factor -->
+        <div class="section">
+            <h2>Configuración</h2>
+            <label for="factor">Factor de División (puntos por día):</label>
+            <input type="number" id="factor" placeholder="Ejemplo: 8" oninput="calculateResults()">
+        </div>
+
+        <!-- Agregar desarrolladores -->
+        <div class="section">
+            <h2>Desarrolladores</h2>
+            <div id="developers">
+                <!-- Campos dinámicos -->
+            </div>
+            <button onclick="addDeveloper()">Agregar desarrollador</button>
+        </div>
+
+        <!-- Referencias de HU -->
+        <div class="section">
+            <h2>Historias de Usuario</h2>
+            <div id="hu-list">
+                <!-- Tabla dinámica -->
+            </div>
+            <button onclick="addHU()">Agregar referencia HU</button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="section">
+            <h2>Resultados</h2>
+            <p>Total de puntos: <span id="total-points">0</span></p>
+            <p>Duración estimada del Sprint: <span id="sprint-days">0</span> días</p>
+            <button onclick="resetData()">Reiniciar</button>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="info-box">
+            <h2>Información de Puntajes</h2>
+            <p>1-3: Tarea sencilla</p>
+            <p>5-8: Tarea moderada</p>
+            <p>13-20: Tareas complicadas</p>
+            <p>21-40: Tareas avanzadas o con alta incertidumbre</p>
+        </div>
+    </div>
+
+    <script>
+        let developers = [];
+        let huList = [];
+
+        function addDeveloper() {
+            const name = prompt("Nombre del desarrollador:");
+            if (name) {
+                developers.push(name);
+                renderDevelopers();
+                renderHUList();
+            }
+        }
+
+        function renderDevelopers() {
+            const container = document.getElementById("developers");
+            container.innerHTML = "";
+            developers.forEach((dev, index) => {
+                container.innerHTML += `<p>${index + 1}. ${dev}</p>`;
+            });
+        }
+
+        function addHU() {
+            const reference = prompt("Referencia de la HU (ejemplo: HU número 1):");
+            if (reference) {
+                huList.push({ reference, points: Array(developers.length).fill(0) });
+                renderHUList();
+            }
+        }
+
+        function renderHUList() {
+            const container = document.getElementById("hu-list");
+            if (huList.length === 0) {
+                container.innerHTML = "<p>No hay historias de usuario aún.</p>";
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>HU</th>
+                    ${developers.map(dev => `<th>${dev}</th>`).join("")}
+                    <th>Total</th>
+                </tr>`;
+
+            huList.forEach((hu, huIndex) => {
+                html += `<tr>
+                    <td>${hu.reference}</td>
+                    ${hu.points.map((point, index) => `
+                        <td>
+                            <input type="number" value="${point}" 
+                                onchange="updatePoints(${huIndex}, ${index}, this)"
+                                oninput="validateAndUpdate(${huIndex}, ${index}, this)"
+                                style="width: 60px;">
+                        </td>`).join("")}
+                    <td>${hu.points.reduce((a, b) => a + b, 0)}</td>
+                </tr>`;
+            });
+
+            html += `</table>`;
+            container.innerHTML = html;
+            calculateResults();
+        }
+
+        function validateAndUpdate(huIndex, devIndex, inputElement) {
+            let value = parseInt(inputElement.value) || 0;
+            if (value > 40) {
+                inputElement.value = 40;
+                value = 40;
+            }
+            huList[huIndex].points[devIndex] = value;
+            renderHUList();
+        }
+
+        function updatePoints(huIndex, devIndex, inputElement) {
+            const value = parseInt(inputElement.value) || 0;
+            huList[huIndex].points[devIndex] = value;
+            calculateResults();
+        }
+
+        function calculateResults() {
+            const totalPoints = huList.reduce((sum, hu) => sum + hu.points.reduce((a, b) => a + b, 0), 0);
+            const factor = parseInt(document.getElementById("factor").value) || 1;
+            const sprintDays = factor > 0 ? (totalPoints / factor).toFixed(2) : 0;
+
+            document.getElementById("total-points").innerText = totalPoints;
+            document.getElementById("sprint-days").innerText = sprintDays;
+        }
+
+        function resetData() {
+            developers = [];
+            huList = [];
+            document.getElementById("factor").value = "";
+            renderDevelopers();
+            renderHUList();
+            calculateResults();
+        }
+    </script>
+</body>
+</html>
